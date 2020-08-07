@@ -1,0 +1,24 @@
+version: 0.2
+
+# $IMAGE_NAME and $ECR_URI needs to be populated by CodeBuild
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region us-west-2)
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...          
+      - echo Path `pwd` 
+      - echo Permissions `ls -la` 
+      - chmod -R 775 decision_trees 
+      - echo Decision Tree Permissions `cd decision_trees && ls -la`     
+      - docker build -t $IMAGE_NAME:latest .
+      - docker tag $IMAGE_NAME:latest $ECR_URI:latest
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $ECR_URI:latest
