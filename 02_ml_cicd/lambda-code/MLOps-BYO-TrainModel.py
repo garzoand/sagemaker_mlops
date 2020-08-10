@@ -23,8 +23,6 @@ def lambda_handler(event, context):
         print('[INFO]TRAIN_START:', train_start)
         
         
-        userParamText = event['CodePipeline.job']['data']['actionConfiguration']['configuration']['UserParameters']
-        user_param = json.loads(userParamText)
         job_name = 'mlops-byo-scikitdt-' + strftime("%Y-%m-%d-%H-%M-%S", gmtime())
         print('[INFO]TRAINING_JOB_NAME:', job_name)
         
