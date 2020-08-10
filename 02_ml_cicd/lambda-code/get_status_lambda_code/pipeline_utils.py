@@ -8,7 +8,7 @@ from boto3.session import Session
 code_pipeline = boto3.client('codepipeline')
 
 def put_job_success(job_id):
-    print("[INFO] Job submitted.")
+    print("[INFO] Pipeline Job succeeded.")
     code_pipeline.put_job_success_result(jobId=job_id)
 
 
@@ -21,19 +21,19 @@ def put_job_failure(job_id, message):
 def continue_job_later(job_id):    
     # Use the continuation token to keep track of any job execution state
     # This data will be available when a new job is scheduled to continue the current execution
-    continuation_token = json.dumps({'previous_job_id': job_id)
+    continuation_token = json.dumps({'previous_job_id': job_id })
     print('[INFO]Putting job continuation')
     code_pipeline.put_job_success_result(jobId=job_id, continuationToken=continuation_token)
 
 
-def write_job_info_s3(event):
+def write_job_info_s3(event, data):
     objectKey = event['CodePipeline.job']['data']['outputArtifacts'][0]['location']['s3Location']['objectKey']
     bucketname = event['CodePipeline.job']['data']['outputArtifacts'][0]['location']['s3Location']['bucketName']
     artifactCredentials = event['CodePipeline.job']['data']['artifactCredentials']
     artifactName = event['CodePipeline.job']['data']['outputArtifacts'][0]['name']
     S3SSEKey = os.environ['KMSKey']
     
-    json_data = json.dumps(event)
+    json_data = json.dumps(data)
     print(json_data)
 
     session = Session(aws_access_key_id=artifactCredentials['accessKeyId'],
@@ -42,7 +42,9 @@ def write_job_info_s3(event):
     s3 = session.resource("s3")
     object = s3.Object(bucketname, objectKey)
     object.put(Body=json_data, ServerSideEncryption='aws:kms', SSEKMSKeyId=S3SSEKey)    
+    print("[INFO]Job info to write down: " + json_data)
     print('[SUCCESS]Job Information Written to S3')
+
 
 
 def read_job_info(event):
@@ -56,7 +58,7 @@ def read_job_info(event):
     s3 = session.resource('s3')
     obj = s3.Object(bucketname,objectKey)     
     item = json.loads(obj.get()['Body'].read().decode('utf-8'))
-    print(item)
+    #print("[INFO]Job info read from S3: " + obj)
     return item
 
 
@@ -65,8 +67,7 @@ def get_job_id(event):
 
 
 def get_user_params(event):
-    userParamText = event['CodePipeline.job']['data']['actionConfiguration']['configuration']['UserParameters']
-    return json.loads(userParamText)
+    return event['CodePipeline.job']['data']['actionConfiguration']['configuration']['UserParameters']    
 
 
 def get_job_name(event):
