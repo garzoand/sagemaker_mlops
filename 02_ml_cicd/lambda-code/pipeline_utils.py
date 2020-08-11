@@ -13,7 +13,7 @@ def put_job_success(job_id):
 
 
 def put_job_failure(job_id, message):
-    print('[FAILURE]Putting job failure')
+    print('[FAILURE] Putting job failure')
     print(message)
     code_pipeline.put_job_failure_result(jobId=job_id, failureDetails={'message': message, 'type': 'JobFailed'})
 
@@ -57,8 +57,9 @@ def read_job_info(event):
    
     s3 = session.resource('s3')
     obj = s3.Object(bucketname,objectKey)     
-    item = json.loads(obj.get()['Body'].read().decode('utf-8'))
-    #print("[INFO]Job info read from S3: " + obj)
+    raw_content = obj.get()['Body'].read().decode('utf-8')
+    item = json.loads(raw_content)
+    print("[INFO]Job info read from S3: ", raw_content)
     return item
 
 
