@@ -75,7 +75,7 @@ def lambda_handler(event, context):
         response = sagemaker.create_training_job(**create_training_params)
 
         # Writes down job info to S3
-        pipeline_utils.write_job_info_s3(event)
+        pipeline_utils.write_job_info_s3(event, { "job_name": job_name })
 
         # Set CodePipeline task completed
         pipeline_utils.put_job_success(job_id)
