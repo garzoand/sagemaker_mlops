@@ -18,10 +18,10 @@ def lambda_handler(event, context):
 
         job_id = pipeline_utils.get_job_id(event)
         prev_step = pipeline_utils.read_job_info(event)        
-        model_name = prev_step['TrainingJobName']
-        model_image = prev_step['AlgorithmSpecification']['TrainingImage']
-        model_artifact = prev_step['ModelArtifacts']['S3ModelArtifacts']
-        endpoint_name = model_name + "_endpoint"
+        model_name = prev_step['ModelName']
+        model_image = prev_step['ModelImage']
+        model_artifact = prev_step['ModelArtifacts']
+        endpoint_name = model_name
 
         create_model(model_name, model_image, model_artifact)
         create_endpoint_config(model_name, endpoint_name)
@@ -36,25 +36,20 @@ def lambda_handler(event, context):
 
 def create_model(model_name, model_image, model_artifact):
     role = os.environ['SageMakerExecutionRole']    
-    try:
-        response=sagemaker.create_model(
-            ModelName=model_name,
-            PrimaryContainer={
-                'Image': model_image,
-                'ModelDataUrl': model_artifact
-            },
-            ExecutionRoleArn=role
-        )
-    except Exception as e:
-        print(e)
-        print("[ERROR] (create_model): ", response)
-        raise(e)
+    response = sagemaker.create_model(
+        ModelName=model_name,
+        PrimaryContainer={
+            'Image': model_image,
+            'ModelDataUrl': model_artifact
+        },
+        ExecutionRoleArn=role
+    )
+    return response
 
 
 def create_endpoint_config(model_name, endpoint_config_name):
-    try:       
-        response = sagemaker.create_endpoint_config(
-            EndpointConfigName=endpoint_config_name,
+    response = sagemaker.create_endpoint_config(
+    EndpointConfigName=endpoint_config_name,
             ProductionVariants=[
                 {
                     'VariantName': 'AllTraffic',
@@ -65,21 +60,12 @@ def create_endpoint_config(model_name, endpoint_config_name):
                 }
             ]
         )
-        return response 
-    except Exception as e:
-        print(e)
-        print("[ERROR] (create_endpoint_config): ", response)
-        raise(e)
+    return response 
 
 
 def create_endpoint(endpoint_config_name):
-    try:
-        response = sagemaker.create_endpoint(
-            EndpointName=endpoint_config_name,
-            EndpointConfigName=endpoint_config_name
-        )
-        return response         
-    except Exception as e:
-        print(e)
-        print("[ERROR] (create_endpoint): ", response)
-        raise(e)
+    response = sagemaker.create_endpoint(
+        EndpointName=endpoint_config_name,
+        EndpointConfigName=endpoint_config_name
+    )
+    return response         

@@ -35,7 +35,13 @@ def lambda_handler(event, context):
                 s3_output_path = response['OutputDataConfig']['S3OutputPath']
                 model_data_url = os.path.join(s3_output_path, sm_job_name, 'output/model.tar.gz')
                 print("[INFO]Training is completed. Model url: " + model_data_url)
-                pipeline_utils.write_job_info_s3(event, { 'model_data_url': model_data_url})
+                print(response)
+                job_info = {
+                    "ModelName": response['TrainingJobName'],
+                    "ModelImage": response['AlgorithmSpecification']['TrainingImage'],
+                    "ModelArtifacts": response['ModelArtifacts']['S3ModelArtifacts']
+                }                
+                pipeline_utils.write_job_info_s3(event, job_info)
                 pipeline_utils.put_job_success(job_id)
             
             elif job_status == "InProgress":
@@ -48,7 +54,9 @@ def lambda_handler(event, context):
             # invalid state
             else:
                 pipeline_utils.put_job_failure(job_id, "Invalid training job status")
-                
+        
+        elif stage_name == "deploy":
+            pass
 
         # invalid stage name
         else:
